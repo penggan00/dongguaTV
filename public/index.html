@@ -86,8 +86,12 @@
                 <div class="section-header">
                     <div class="section-line"></div>
                     <div class="section-title"><i class="fas fa-film"></i> 全球震感·电影榜</div>
+                    <div class="hot-row-nav">
+                        <button class="nav-btn nav-prev" @click="scrollHotRow('movie', 'prev')"><i class="fas fa-chevron-left"></i></button>
+                        <button class="nav-btn nav-next" @click="scrollHotRow('movie', 'next')"><i class="fas fa-chevron-right"></i></button>
+                    </div>
                 </div>
-                <div class="hot-row">
+                <div class="hot-row" data-section="movie">
                     <div class="hot-card" v-for="item in movieList" :key="item.id" @click="autoSearch(item.title)">
                         <div class="poster-wrap">
                             <img :src="'https://daili.smdhb.com/t/p/w300' + item.poster_path" loading="lazy">
@@ -105,8 +109,12 @@
                 <div class="section-header">
                     <div class="section-line"></div>
                     <div class="section-title"><i class="fas fa-tv"></i> 全球必追·剧集榜</div>
+                    <div class="hot-row-nav">
+                        <button class="nav-btn nav-prev" @click="scrollHotRow('tv', 'prev')"><i class="fas fa-chevron-left"></i></button>
+                        <button class="nav-btn nav-next" @click="scrollHotRow('tv', 'next')"><i class="fas fa-chevron-right"></i></button>
+                    </div>
                 </div>
-                <div class="hot-row">
+                <div class="hot-row" data-section="tv">
                     <div class="hot-card" v-for="item in tvList" :key="item.id" @click="autoSearch(item.name)">
                         <div class="poster-wrap">
                             <img :src="'https://daili.smdhb.com/t/p/w300' + item.poster_path" loading="lazy">
@@ -124,8 +132,12 @@
                 <div class="section-header">
                     <div class="section-line"></div>
                     <div class="section-title"><i class="fas fa-dragon"></i> 华语强档·国产剧</div>
+                    <div class="hot-row-nav">
+                        <button class="nav-btn nav-prev" @click="scrollHotRow('cn', 'prev')"><i class="fas fa-chevron-left"></i></button>
+                        <button class="nav-btn nav-next" @click="scrollHotRow('cn', 'next')"><i class="fas fa-chevron-right"></i></button>
+                    </div>
                 </div>
-                <div class="hot-row">
+                <div class="hot-row" data-section="cn">
                     <div class="hot-card" v-for="item in list_cn" :key="item.id" @click="autoSearch(item.name)">
                         <div class="poster-wrap">
                             <img :src="'https://daili.smdhb.com/t/p/w300' + item.poster_path" loading="lazy">
@@ -143,8 +155,12 @@
                 <div class="section-header">
                     <div class="section-line"></div>
                     <div class="section-title"><i class="fas fa-mask"></i> 日韩潮流·剧集/动漫</div>
+                    <div class="hot-row-nav">
+                        <button class="nav-btn nav-prev" @click="scrollHotRow('krjp', 'prev')"><i class="fas fa-chevron-left"></i></button>
+                        <button class="nav-btn nav-next" @click="scrollHotRow('krjp', 'next')"><i class="fas fa-chevron-right"></i></button>
+                    </div>
                 </div>
-                <div class="hot-row">
+                <div class="hot-row" data-section="krjp">
                     <div class="hot-card" v-for="item in list_krjp" :key="item.id" @click="autoSearch(item.name)">
                         <div class="poster-wrap">
                             <img :src="'https://daili.smdhb.com/t/p/w300' + item.poster_path" loading="lazy">
@@ -270,6 +286,143 @@
 
         let dp = null;
 
+        // 添加触摸滑动支持函数
+        function initHotRowSwipe() {
+            const hotRows = document.querySelectorAll('.hot-row');
+            
+            hotRows.forEach(row => {
+                let isDown = false;
+                let startX;
+                let scrollLeft;
+                let velocity = 0;
+                let lastX = 0;
+                let lastTime = 0;
+                let startY = 0;
+                let isScrolling = false;
+                
+                row.addEventListener('mousedown', (e) => {
+                    isDown = true;
+                    startX = e.pageX - row.offsetLeft;
+                    scrollLeft = row.scrollLeft;
+                    lastX = e.pageX;
+                    lastTime = Date.now();
+                    velocity = 0;
+                    row.style.cursor = 'grabbing';
+                    row.style.scrollSnapType = 'none';
+                    row.classList.add('grabbing');
+                });
+                
+                row.addEventListener('mouseleave', () => {
+                    isDown = false;
+                    row.style.cursor = 'grab';
+                    row.style.scrollSnapType = 'x mandatory';
+                    row.classList.remove('grabbing');
+                });
+                
+                row.addEventListener('mouseup', () => {
+                    isDown = false;
+                    row.style.cursor = 'grab';
+                    row.style.scrollSnapType = 'x mandatory';
+                    row.classList.remove('grabbing');
+                    
+                    // 添加惯性滚动
+                    if (Math.abs(velocity) > 0.5) {
+                        const inertiaScroll = () => {
+                            if (Math.abs(velocity) > 0.1) {
+                                row.scrollLeft += velocity;
+                                velocity *= 0.95; // 摩擦力
+                                requestAnimationFrame(inertiaScroll);
+                            }
+                        };
+                        requestAnimationFrame(inertiaScroll);
+                    }
+                });
+                
+                row.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - row.offsetLeft;
+                    const walk = (x - startX) * 2; // 滚动速度倍数
+                    row.scrollLeft = scrollLeft - walk;
+                    
+                    // 计算速度
+                    const currentTime = Date.now();
+                    const timeDiff = currentTime - lastTime;
+                    if (timeDiff > 0) {
+                        velocity = (e.pageX - lastX) / timeDiff * 10;
+                    }
+                    lastX = e.pageX;
+                    lastTime = currentTime;
+                });
+                
+                // 触摸事件支持 - 改进版
+                row.addEventListener('touchstart', (e) => {
+                    isDown = true;
+                    isScrolling = false;
+                    startX = e.touches[0].pageX - row.offsetLeft;
+                    startY = e.touches[0].pageY;
+                    scrollLeft = row.scrollLeft;
+                    lastX = e.touches[0].pageX;
+                    lastTime = Date.now();
+                    velocity = 0;
+                    row.style.scrollSnapType = 'none';
+                });
+                
+                row.addEventListener('touchmove', (e) => {
+                    if (!isDown) return;
+                    
+                    const currentX = e.touches[0].pageX;
+                    const currentY = e.touches[0].pageY;
+                    const deltaX = Math.abs(currentX - startX);
+                    const deltaY = Math.abs(currentY - startY);
+                    
+                    // 如果垂直移动大于水平移动，则允许页面滚动
+                    if (deltaY > deltaX && deltaY > 10) {
+                        isScrolling = true;
+                        return;
+                    }
+                    
+                    if (isScrolling) return;
+                    
+                    e.preventDefault();
+                    const x = currentX - row.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    row.scrollLeft = scrollLeft - walk;
+                    
+                    const currentTime = Date.now();
+                    const timeDiff = currentTime - lastTime;
+                    if (timeDiff > 0) {
+                        velocity = (currentX - lastX) / timeDiff * 10;
+                    }
+                    lastX = currentX;
+                    lastTime = currentTime;
+                });
+                
+                row.addEventListener('touchend', () => {
+                    if (!isDown) return;
+                    isDown = false;
+                    row.style.scrollSnapType = 'x mandatory';
+                    
+                    if (!isScrolling && Math.abs(velocity) > 0.5) {
+                        const inertiaScroll = () => {
+                            if (Math.abs(velocity) > 0.1) {
+                                row.scrollLeft += velocity;
+                                velocity *= 0.95;
+                                requestAnimationFrame(inertiaScroll);
+                            }
+                        };
+                        requestAnimationFrame(inertiaScroll);
+                    }
+                    isScrolling = false;
+                });
+                
+                // 设置初始样式
+                row.style.cursor = 'grab';
+                row.style.scrollSnapType = 'x mandatory';
+                row.style.scrollPadding = '0 20px';
+            });
+        }
+
         createApp({
             data() {
                 return {
@@ -285,6 +438,12 @@
                 window.addEventListener('scroll', () => { this.scrollY = window.scrollY; });
                 this.fetchHero();
                 this.fetchAllLists();
+                
+                // 初始化热榜滑动功能
+                this.$nextTick(() => {
+                    initHotRowSwipe();
+                    this.initHotRowNavStates();
+                });
             },
             computed: {
                 groupedList() {
@@ -428,6 +587,66 @@
                     });
                     else dp.switchVideo({ url: url, type: 'hls' });
                     dp.play();
+                },
+                
+                // 热榜左右滚动功能
+                scrollHotRow(section, direction) {
+                    const hotRow = document.querySelector(`[data-section="${section}"]`);
+                    if (!hotRow) return;
+                    
+                    const cardWidth = 164; // 150px width + 14px gap
+                    const scrollAmount = cardWidth * 3; // 一次滚动3个项目
+                    
+                    if (direction === 'prev') {
+                        hotRow.scrollBy({
+                            left: -scrollAmount,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        hotRow.scrollBy({
+                            left: scrollAmount,
+                            behavior: 'smooth'
+                        });
+                    }
+                    
+                    // 更新导航按钮状态
+                    this.updateNavButtons(hotRow, section);
+                },
+                
+                updateNavButtons(hotRow, section) {
+                    const prevBtn = document.querySelector(`[data-section="${section}"]`).parentElement.querySelector('.nav-prev');
+                    const nextBtn = document.querySelector(`[data-section="${section}"]`).parentElement.querySelector('.nav-next');
+                    
+                    if (prevBtn && nextBtn) {
+                        // 检查是否可以向前滚动
+                        prevBtn.disabled = hotRow.scrollLeft <= 0;
+                        
+                        // 检查是否可以向后滚动
+                        const maxScroll = hotRow.scrollWidth - hotRow.clientWidth;
+                        nextBtn.disabled = hotRow.scrollLeft >= maxScroll - 10; // 10px 容差
+                    }
+                },
+                
+                // 初始化所有热榜导航按钮状态
+                initHotRowNavStates() {
+                    const sections = ['movie', 'tv', 'cn', 'krjp'];
+                    sections.forEach(section => {
+                        const hotRow = document.querySelector(`[data-section="${section}"]`);
+                        if (hotRow) {
+                            // 监听滚动事件更新按钮状态
+                            hotRow.addEventListener('scroll', () => {
+                                this.updateNavButtons(hotRow, section);
+                            });
+                            
+                            // 初始状态
+                            this.updateNavButtons(hotRow, section);
+                            
+                            // 窗口大小改变时重新计算
+                            window.addEventListener('resize', () => {
+                                this.updateNavButtons(hotRow, section);
+                            });
+                        }
+                    });
                 }
             }
         }).mount('#app');

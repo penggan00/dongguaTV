@@ -246,7 +246,8 @@ body {
 .section-header {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    position: relative;
 }
 
 .section-line {
@@ -273,16 +274,104 @@ body {
     opacity: 0.7;
 }
 
+/* 热榜导航按钮 */
+.hot-row-nav {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.nav-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.nav-btn:active {
+    transform: scale(0.95);
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.nav-btn i {
+    font-size: 12px;
+}
+
+/* 移动端隐藏导航按钮 */
+@media (max-width: 768px) {
+    .hot-row-nav {
+        display: none;
+    }
+    
+    .hot-row {
+        padding: 0 15px 20px;
+        margin: 0 -15px;
+    }
+    
+    .hot-card {
+        min-width: 120px;
+        width: 120px;
+    }
+}
+
 .hot-row {
     display: flex;
     gap: 14px;
     overflow-x: auto;
+    overflow-y: hidden;
     padding-bottom: 20px;
     scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    cursor: grab;
+    user-select: none;
+    padding: 0 20px 20px;
+    margin: 0 -20px;
 }
 
 .hot-row::-webkit-scrollbar {
     height: 0px;
+}
+
+.hot-row:active {
+    cursor: grabbing;
+    scroll-snap-type: none;
+}
+
+.hot-row.grabbing {
+    cursor: grabbing;
+    scroll-snap-type: none;
+}
+
+.hot-card {
+    min-width: 150px;
+    width: 150px;
+    cursor: pointer;
+    transition: 0.3s;
+    position: relative;
+    scroll-snap-align: start;
+    flex-shrink: 0;
 }
 
 .hot-card {
